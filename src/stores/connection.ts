@@ -11,10 +11,17 @@ interface ConnectionState {
   serverUrl: string | null
   health: HealthInfo | null
   error: string | null
+  sseRetryCount: number
+  sseLastError: string | null
+  notifications: Array<{ id: string; type: "error" | "info" | "success"; text: string; time: number }>
 
   connect: (url: string, password?: string, directory?: string) => Promise<void>
   disconnect: () => void
   checkHealth: () => Promise<void>
+  addNotification: (type: "error" | "info" | "success", text: string) => void
+  removeNotification: (id: string) => void
+  setSSERetryCount: (n: number) => void
+  setSSELastError: (msg: string) => void
 }
 
 async function ensureServerViaTauri(): Promise<boolean> {
@@ -39,13 +46,28 @@ function getFriendlyError(err: unknown): string {
   return "Connection failed"
 }
 
-export const useConnectionStore = create<ConnectionState>((set) => ({
+export const useConnectionStore = create<ConnectionState>((set, get) => ({
   status: "disconnected",
   serverUrl: null,
   health: null,
   error: null,
+  sseRetryCount: 0,
+  sseLastError: "",
+  notifications: [],
 
-  connect: async (url: string, password?: string, directory?: string) => {
+  addNotification: (type, text) => {
+    const id = `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+    set((s) => ({ notifications: [...s.notifications, { id, type, text, time: Date.now() }] }))
+    // Auto-dismiss after 8s
+    setTimeout(() => get().removeNotification(id), 8000)
+  },
+  removeNotification: (id) => {
+    set((s) => ({ notifications: s.notifications.filter((n) => n.id !== id) }))
+  },
+  setSSERetryCount: (n) => set({ sseRetryCount: n }),
+  setSSELastError: (msg) => set({ sseLastError: msg }),
+
+  connect: async (url, password, directory) => {
     const dirToUse = directory ?? (() => { try { return localStorage.getItem("ganesha:directory") } catch { return null } })()
     set({ status: "connecting", error: null })
     try {

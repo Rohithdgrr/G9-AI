@@ -6,12 +6,34 @@ import { useEventStream } from "./hooks/useEventStream"
 import { usePermissionStore } from "./stores/permission"
 import { useProjectStore } from "./stores/project"
 import { ConnectionScreen } from "./components/connection/ConnectionScreen"
+import { NotificationToast } from "./components/ui/Notification"
 import { MessageList } from "./components/chat/MessageList"
 import { InputArea } from "./components/chat/InputArea"
 import { SettingsPanel } from "./components/settings/SettingsPanel"
 import { CommandPalette } from "./components/command/CommandPalette"
 import { DiffView, VcsStatus } from "./components/vcs/VcsStatus"
 import { getClient } from "./sdk/client"
+
+function SSEBanner() {
+  const retryCount = useConnectionStore((s) => s.sseRetryCount)
+  const lastError = useConnectionStore((s) => s.sseLastError)
+  const maxRetries = 15
+
+  if (retryCount === 0) return null
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-[150] bg-amber-500/10 border-t border-amber-500/30 px-4 py-2.5 text-center backdrop-blur-md">
+      <span className="text-[12px] font-medium text-amber-600">
+        {retryCount >= maxRetries
+          ? "SSE streaming unavailable — check server and refresh"
+          : `Reconnecting to SSE stream… (attempt ${retryCount}/${maxRetries})`}
+      </span>
+      {lastError && (
+        <span className="ml-2 text-[11px] text-amber-500/80 truncate max-w-[400px] inline-block align-middle">{lastError}</span>
+      )}
+    </div>
+  )
+}
 
 function App() {
   const { status, connect } = useConnectionStore()
@@ -88,6 +110,8 @@ function App() {
 
   return (
     <div className="flex h-full bg-bg-primary">
+      <NotificationToast />
+      <SSEBanner />
       <div className="w-[300px] shrink-0 bg-bg-secondary border-r border-border flex flex-col">
         <div className="h-12 px-3 flex items-center gap-2 border-b border-border shrink-0">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-[11px] font-black">G</div>

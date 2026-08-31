@@ -1,6 +1,10 @@
 import { getServerUrl } from "./client"
+import { useConnectionStore } from "../stores/connection"
 
 export type SSEEvent = { type: string; properties: Record<string, unknown> }
+
+const MAX_SSE_RETRIES = 15
+const BASE_RETRY_DELAY = 1000
 
 function buildEventUrl(path = "/global/event"): string {
   const isDev = import.meta.env.DEV
@@ -50,14 +54,20 @@ function getCredentials(): { directory: string | null; password: string | null }
 /**
  * Fetch-based SSE — replaces EventSource which cannot send Authorization headers.
  * Works for all folders and both dev (Vite proxy) and Tauri prod.
+ * Caps retries at MAX_SSE_RETRIES and surfaces errors to the connection store.
  */
 export function subscribeEvents(
   onEvent: (event: SSEEvent) => void,
   onError?: (err: unknown) => void
-): { unsubscribe: () => void } {
+): { unsubscribe: () => void; retryCount: () => number } {
   let cancelled = false
-  let retryDelay = 1000
+  let retryDelay = BASE_RETRY_DELAY
+  let retryCount = 0
   let abortController: AbortController | null = null
+
+  function getRetryDelay(): number {
+    return Math.min(BASE_RETRY_DELAY * Math.pow(1.5, Math.min(retryCount, 10)), 30000)
+  }
 
   async function connect() {
     if (cancelled) return
@@ -73,7 +83,7 @@ export function subscribeEvents(
     if (directory) headers["x-opencode-directory"] = encodeURIComponent(directory)
 
     // Debug without leaking full token
-    console.debug("[SSE] connecting", { url, hasAuth: !!password, directory: directory || "(none)" })
+    console.debug("[SSE] connecting", { url, hasAuth: !!password, directory: directory || "(none)", retryCount })
 
     try {
       abortController = new AbortController()
@@ -85,7 +95,12 @@ export function subscribeEvents(
       }
       if (!res.body) throw new Error("No response body from SSE endpoint")
 
-      retryDelay = 1000
+      // Reset retry state on successful connection
+      retryCount = 0
+      retryDelay = BASE_RETRY_DELAY
+      useConnectionStore.getState().setSSERetryCount(0)
+      useConnectionStore.getState().setSSELastError("")
+      useConnectionStore.getState().addNotification("success", "SSE connected — streaming active")
       console.debug("[SSE] connected via fetch")
 
       const reader = res.body.getReader()
@@ -128,16 +143,27 @@ export function subscribeEvents(
     } catch (err) {
       if (cancelled) return
       if (err instanceof DOMException && err.name === "AbortError") return
-      // 401/403 — don't spam retries with same bad creds, surface error
+
       const msg = err instanceof Error ? err.message : String(err)
-      const isAuth = msg.includes("401") || msg.includes("403")
-      console.error("[SSE] error:", msg, isAuth ? "(check password / directory)" : "")
-      onError?.(err)
-      if (!cancelled) {
-        const delay = isAuth ? Math.min(retryDelay * 2, 15000) : retryDelay
-        setTimeout(connect, delay)
-        retryDelay = Math.min(retryDelay * 1.5, 10000)
+      const isAuth = msg.includes("401") || msg.includes("403") || msg.includes("401") || msg.includes("Unauthorized")
+
+      // Increment retry count and surface to store
+      retryCount++
+      useConnectionStore.getState().setSSERetryCount(retryCount)
+      useConnectionStore.getState().setSSELastError(msg)
+      console.error(`[SSE] error #${retryCount}:`, msg, isAuth ? "(check password / directory)" : "")
+
+      // Cap retries and surface user-friendly error
+      if (retryCount >= MAX_SSE_RETRIES) {
+        useConnectionStore.getState().addNotification("error", `SSE streaming failed after ${MAX_SSE_RETRIES} retries. ${msg}`)
+        useConnectionStore.getState().setSSELastError(`Failed after ${MAX_SSE_RETRIES} retries: ${msg}`)
+        return
       }
+
+      const delay = isAuth ? Math.min(getRetryDelay(), 15000) : getRetryDelay()
+      console.debug(`[SSE] retry #${retryCount} in ${delay}ms`)
+      await new Promise((r) => setTimeout(r, delay))
+      if (!cancelled) connect()
     }
   }
 
@@ -148,5 +174,6 @@ export function subscribeEvents(
       cancelled = true
       if (abortController) { abortController.abort(); abortController = null }
     },
+    retryCount: () => retryCount,
   }
 }
