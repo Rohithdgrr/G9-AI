@@ -12,7 +12,7 @@ interface ConnectionState {
   health: HealthInfo | null
   error: string | null
 
-  connect: (url: string, password?: string) => Promise<void>
+  connect: (url: string, password?: string, directory?: string) => Promise<void>
   disconnect: () => void
   checkHealth: () => Promise<void>
 }
@@ -46,7 +46,6 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   error: null,
 
   connect: async (url: string, password?: string, directory?: string) => {
-    // Directory may be passed explicitly (audit Step 1) or read from localStorage (project picker)
     const dirToUse = directory ?? (() => { try { return localStorage.getItem("ganesha:directory") } catch { return null } })()
     set({ status: "connecting", error: null })
     try {
@@ -55,13 +54,10 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
         ? "/global/health"
         : url.replace(/\/$/, "") + "/global/health"
 
+      // Health is global — do NOT send directory header here (server validates it and can 500 on bad path)
       const headers: Record<string, string> = {}
       if (password) {
         headers["Authorization"] = `Basic ${btoa(`opencode:${password}`)}`
-      }
-      // Persist directory before health check so server sees same workspace
-      if (dirToUse) {
-        headers["x-opencode-directory"] = encodeURIComponent(dirToUse)
       }
 
       let healthResp = await fetch(fetchUrl, { method: "GET", headers }).catch(async (e) => {
