@@ -80,24 +80,30 @@ useProjectStore.setState({
       const selected = await tauri.open({ directory: true, multiple: false, title: "Open Project Folder" })
       if (typeof selected === "string" && selected) {
         localStorage.setItem("ganesha:directory", selected)
-        // Recreate client with new directory header
+        // Recreate client with new directory header — preserve password
         const { connect, getServerUrl } = await import("../sdk/client")
         const url = getServerUrl() || "http://localhost:4096"
-        connect(url)
-        // Also set via SDK header for next calls
-        const { getClient } = await import("../sdk/client")
+        let pwd: string | undefined
         try {
-          // Force directory via header injection: set on next fetch via x-opencode-directory
-          // The SDK's createOpencodeClient supports directory option; we emulate by setting header
-          // For now, also store in localStorage and reload page to reinitialize
-          location.reload()
+          const stored = localStorage.getItem("ganesha:connection")
+          if (stored) pwd = JSON.parse(stored).password as string
         } catch {}
+        connect(url, pwd, selected)
+        location.reload()
       }
     } catch {
-      // Fallback: prompt
-      const dir = prompt("Enter project directory path:")
+      // Fallback: prompt for absolute path
+      const dir = prompt("Enter project directory (absolute path, e.g. C:\\projects\\myapp):")
       if (dir) {
         localStorage.setItem("ganesha:directory", dir)
+        const { connect, getServerUrl } = await import("../sdk/client")
+        const url = getServerUrl() || "http://localhost:4096"
+        let pwd: string | undefined
+        try {
+          const stored = localStorage.getItem("ganesha:connection")
+          if (stored) pwd = JSON.parse(stored).password as string
+        } catch {}
+        connect(url, pwd, dir)
         location.reload()
       }
     }

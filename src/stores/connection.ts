@@ -45,7 +45,9 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   health: null,
   error: null,
 
-  connect: async (url: string, password?: string) => {
+  connect: async (url: string, password?: string, directory?: string) => {
+    // Directory may be passed explicitly (audit Step 1) or read from localStorage (project picker)
+    const dirToUse = directory ?? (() => { try { return localStorage.getItem("ganesha:directory") } catch { return null } })()
     set({ status: "connecting", error: null })
     try {
       const isDev = import.meta.env.DEV
@@ -56,6 +58,10 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
       const headers: Record<string, string> = {}
       if (password) {
         headers["Authorization"] = `Basic ${btoa(`opencode:${password}`)}`
+      }
+      // Persist directory before health check so server sees same workspace
+      if (dirToUse) {
+        headers["x-opencode-directory"] = encodeURIComponent(dirToUse)
       }
 
       let healthResp = await fetch(fetchUrl, { method: "GET", headers }).catch(async (e) => {
@@ -82,16 +88,17 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
 
       const healthData = await healthResp.json()
 
-      // Persist password for SSE fetch (EventSource cannot send headers)
+      // Persist password + directory for SSE fetch (EventSource cannot send headers)
       try {
         if (password) {
           localStorage.setItem("ganesha:connection", JSON.stringify({ password }))
         } else {
           localStorage.removeItem("ganesha:connection")
         }
+        if (dirToUse) localStorage.setItem("ganesha:directory", dirToUse)
       } catch { /* ignore */ }
 
-      sdkConnect(url, password)
+      sdkConnect(url, password, dirToUse || undefined)
       const client = getClient()
       const result = await client.provider.list()
 
