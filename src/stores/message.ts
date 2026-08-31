@@ -33,10 +33,44 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       const client = getClient()
       const result = await client.session.messages({ path: { id: sessionId }, query: limit ? { limit } : undefined })
       const data = result.data as Array<{ info: Message; parts: Part[] }> | undefined
-      const messages = (data || []) as MessageWithParts[]
+      const serverMessages = (data || []) as MessageWithParts[]
       set((state) => {
         const m = new Map(state.messages)
-        m.set(sessionId, messages)
+        const wasStreaming = state.streaming.get(sessionId)?.active
+        if (wasStreaming) {
+          // Merge guard: don't clobber in-flight SSE text that hasn't been persisted yet.
+          const local = state.messages.get(sessionId) || []
+          const serverById = new Map(serverMessages.map((sm) => [sm.info.id, sm]))
+          const merged: MessageWithParts[] = serverMessages.map((sm) => {
+            const lm = local.find((x) => x.info.id === sm.info.id)
+            if (!lm) return sm
+            // Merge parts: keep longer text (local SSE may be ahead of DB)
+            const serverPartsById = new Map(sm.parts.map((p) => [(p as { id: string }).id, p]))
+            const mergedParts: Part[] = sm.parts.map((sp) => {
+              const lid = (sp as { id: string }).id
+              const lp = lm.parts.find((p) => (p as { id: string }).id === lid) as TextPart | undefined
+              if (lp && sp.type === "text" && lp.type === "text") {
+                const lt = (lp as TextPart).text || ""
+                const st = (sp as TextPart).text || ""
+                if (lt.length > st.length) return lp as Part
+              }
+              return sp
+            })
+            // Preserve local parts not yet on server (new tokens)
+            for (const lp of lm.parts) {
+              const lid2 = (lp as { id: string }).id
+              if (!serverPartsById.has(lid2)) mergedParts.push(lp)
+            }
+            return { info: sm.info, parts: mergedParts }
+          })
+          // Preserve local-only messages (optimistic user message before server ack)
+          for (const lm of local) {
+            if (!serverById.has(lm.info.id)) merged.push(lm)
+          }
+          m.set(sessionId, merged)
+        } else {
+          m.set(sessionId, serverMessages)
+        }
         return { messages: m }
       })
     } catch { /* empty */ }
@@ -90,7 +124,8 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       const idx = list.findIndex((m) => m.info.id === messageID)
       if (idx >= 0) {
         const msg = list[idx]
-        const pIdx = msg.parts.findIndex((p) => (p as { id: string }).id === (part as { id: string }).id)
+        const pid = (part as { id: string }).id
+        const pIdx = msg.parts.findIndex((p) => (p as { id: string }).id === pid)
         const newParts = [...msg.parts]
         if (pIdx >= 0) newParts[pIdx] = part as Part
         else newParts.push(part as Part)
@@ -98,20 +133,19 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         newList[idx] = { ...msg, parts: newParts }
         nm.set(sessionID, newList)
       } else {
-        // New message for this part — try to find or create
-        // Fallback: append to last assistant message or create new
-        const last = list[list.length - 1]
-        if (last && last.info.role === "assistant" && last.info.id === messageID) {
-          const newParts = [...last.parts, part]
-          const newList = [...list.slice(0, -1), { ...last, parts: newParts }]
-          nm.set(sessionID, newList)
-        } else {
-          // Create placeholder message — will be replaced by message.updated
-          nm.set(sessionID, [...list, {
-            info: { id: messageID, sessionID, role: "assistant", time: { created: Date.now() }, parentID: "", modelID: "", providerID: "", mode: "build", path: { cwd: "", root: "" }, cost: 0, tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } } } as Message,
-            parts: [part],
-          }])
-        }
+        // Message not yet in store — create placeholder
+        // This happens when part.updated arrives before message.updated
+        nm.set(sessionID, [...list, {
+          info: {
+            id: messageID, sessionID, role: "assistant",
+            time: { created: Date.now() },
+            parentID: "", agent: "", model: { providerID: "", modelID: "" },
+            modelID: "", providerID: "", mode: "build",
+            path: { cwd: "", root: "" },
+            cost: 0, tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+          } as Message,
+          parts: [part],
+        }])
       }
       return { messages: nm }
     })

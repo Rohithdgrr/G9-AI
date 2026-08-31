@@ -18,6 +18,17 @@ export default defineConfig({
       "/global": {
         target: "http://localhost:4096",
         changeOrigin: true,
+        // Critical for token-by-token SSE: don't buffer, pass through as event-stream
+        configure: (proxy) => {
+          proxy.on("proxyRes", (proxyRes) => {
+            proxyRes.headers["cache-control"] = "no-cache"
+            // Ensure Vite doesn't buffer SSE
+            if (proxyRes.headers["content-type"]?.includes("text/event-stream")) {
+              // @ts-ignore - Node http headers
+              proxyRes.headers["x-accel-buffering"] = "no"
+            }
+          })
+        },
       },
       "/session": {
         target: "http://localhost:4096",
@@ -34,6 +45,15 @@ export default defineConfig({
       "/event": {
         target: "http://localhost:4096",
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on("proxyRes", (proxyRes) => {
+            proxyRes.headers["cache-control"] = "no-cache"
+            if (proxyRes.headers["content-type"]?.includes("text/event-stream")) {
+              // @ts-ignore
+              proxyRes.headers["x-accel-buffering"] = "no"
+            }
+          })
+        },
       },
       "/find": {
         target: "http://localhost:4096",

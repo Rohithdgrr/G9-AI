@@ -15,6 +15,8 @@ interface SessionState {
   setActiveSession: (id: string) => void
   renameSession: (id: string, title: string) => Promise<void>
   forkSession: (id: string, messageID?: string) => Promise<Session>
+  shareSession: (id: string) => Promise<string | null>
+  summarizeSession: (id: string) => Promise<void>
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -68,5 +70,27 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const forked = result.data as Session
     set((s) => ({ sessions: [forked, ...s.sessions], activeSessionId: forked.id }))
     return forked
+  },
+
+  shareSession: async (id: string) => {
+    try {
+      const c = getClient()
+      const r = await c.session.share({ path: { id } })
+      const data = r.data as Session & { share?: { url: string } }
+      const url = (data as { share?: { url: string } }).share?.url || null
+      if (url) { try { await navigator.clipboard.writeText(url) } catch {} }
+      set((s) => ({ sessions: s.sessions.map((x) => (x.id === id ? (data as Session) : x)) }))
+      return url
+    } catch { return null }
+  },
+
+  summarizeSession: async (id: string) => {
+    try {
+      const c = getClient()
+      // Use selected model or fallback
+      let providerID = "opencode", modelID = "claude-sonnet-5"
+      try { const m = JSON.parse(localStorage.getItem("ganesha:model") || "null"); if (m) { providerID = m.providerID; modelID = m.modelID } } catch {}
+      await c.session.summarize({ path: { id }, body: { providerID, modelID } })
+    } catch {}
   },
 }))

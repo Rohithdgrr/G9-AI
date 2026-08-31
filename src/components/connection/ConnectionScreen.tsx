@@ -8,6 +8,12 @@ export function ConnectionScreen() {
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault()
+    // Try Tauri auto-start first (if in desktop, this will spawn opencode if not running)
+    try {
+      const { invoke } = await import("@tauri-apps/api/core")
+      await invoke("ensure_opencode_server", { port: 4096 }).catch(() => {})
+      await new Promise((r) => setTimeout(r, 600))
+    } catch {}
     await connect(url, password || undefined)
   }
 
@@ -107,7 +113,7 @@ export function ConnectionScreen() {
           </div>
 
           <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-text-muted">
-            <code className="px-2 py-1 rounded-lg bg-bg-tertiary border border-border">opencode serve --port 4096 --cors http://localhost:1420</code>
+            <code className="px-2 py-1 rounded-lg bg-bg-tertiary border border-border">auto-starts via Tauri • no manual serve needed</code>
           </div>
         </div>
 

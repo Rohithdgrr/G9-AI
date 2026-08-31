@@ -29,7 +29,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   theme: (localStorage.getItem("ganesha:theme") as Theme) || "dark",
   fontSize: Number(localStorage.getItem("ganesha:fontSize") || 13),
   density: (localStorage.getItem("ganesha:density") as "comfortable" | "compact") || "comfortable",
-  selectedModel: JSON.parse(localStorage.getItem("ganesha:model") || "null"),
+  selectedModel: JSON.parse(localStorage.getItem("ganesha:model") || '{"providerID":"opencode","modelID":"mimo-v2.5-free"}'),
   providers: [],
 
   setTheme: (theme: Theme) => {
@@ -55,32 +55,60 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   loadProviders: async () => {
     try {
       const c = getClient()
-      // config.providers returns { providers: Provider[], default: Record<string,string> }
       const res = await c.config.providers()
       const data = res.data as { providers?: unknown[]; default?: Record<string, string> } | unknown[]
       const list: { providerID: string; modelID: string; name: string }[] = []
       if (Array.isArray(data)) {
-        // fallback: array of providers?
+        // ignore
       } else if (data && typeof data === "object" && "providers" in data) {
-        const providers = (data as { providers: Array<{ id: string; models?: Array<{ id: string; name?: string }> } | string> }).providers || []
+        const providers = (data as { providers: Array<{ id: string; models?: Array<{ id: string; name?: string; models?: unknown }> } | string> }).providers || []
         for (const p of providers as Array<{ id: string; models?: Array<{ id: string; name?: string }> } | string>) {
           if (typeof p === "string") continue
           const pid = p.id
-          for (const m of p.models || []) {
+          const models = (p as { models?: Array<{ id: string; name?: string } | string> }).models || []
+          for (const m of models) {
             const mid = typeof m === "string" ? m : m.id
             const name = typeof m === "string" ? m : m.name || m.id
             list.push({ providerID: pid, modelID: mid, name: `${pid}/${name}` })
           }
         }
       }
-      // Fallback via provider.list + config direct fetch
       if (list.length === 0) {
         try {
           const pRes = await c.provider.list()
-          const pData = pRes.data as { all?: Array<{ id: string }>; default?: Record<string, string> } | unknown
+          const pData = pRes.data as { all?: Array<{ id: string; models?: Array<{ id: string; name?: string } | string> }>; default?: Record<string, string> } | unknown
           if (pData && typeof pData === "object" && "all" in pData) {
-            for (const pr of (pData as { all: Array<{ id: string }> }).all || []) {
-              list.push({ providerID: pr.id, modelID: "default", name: pr.id })
+            const all = (pData as { all: Array<{ id: string; models?: Array<{ id: string; name?: string } | string> }> }).all || []
+            for (const pr of all) {
+              const models = (pr as { models?: Array<{ id: string; name?: string } | string> }).models || []
+              if (models.length) {
+                for (const m of models) {
+                  const mid = typeof m === "string" ? m : m.id
+                  const name = typeof m === "string" ? m : m.name || m.id
+                  list.push({ providerID: pr.id, modelID: mid, name: `${pr.id}/${name}` })
+                }
+              } else {
+                list.push({ providerID: pr.id, modelID: "default", name: pr.id })
+              }
+            }
+          }
+        } catch {}
+      }
+      // Also try direct fetch for model list
+      if (list.length === 0) {
+        try {
+          const base = (() => { try { return localStorage.getItem("ganesha:directory") } catch { return null } })()
+          const headers: Record<string, string> = {}
+          if (base) headers["x-opencode-directory"] = encodeURIComponent(base)
+          const r = await fetch("/config/providers", { headers })
+          if (r.ok) {
+            const j = await r.json() as { providers?: Array<{ id: string; models?: Array<{ id: string; name?: string } | string> }> }
+            for (const p of j.providers || []) {
+              for (const m of p.models || []) {
+                const mid = typeof m === "string" ? m : m.id
+                const name = typeof m === "string" ? m : m.name || m.id
+                list.push({ providerID: p.id, modelID: mid, name: `${p.id}/${name}` })
+              }
             }
           }
         } catch {}

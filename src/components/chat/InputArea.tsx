@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react"
 import { useMessageStore } from "../../stores/message"
 import { getClient } from "../../sdk/client"
+import { ModelPicker } from "./ModelPicker"
 
-export function InputArea({ sessionId }: { sessionId: string }) {
+export function InputArea({ sessionId, onSelectFile }: { sessionId: string; onSelectFile?: (path: string) => void }) {
   const [text, setText] = useState("")
   const [fileResults, setFileResults] = useState<string[]>([])
   const [showMentions, setShowMentions] = useState(false)
@@ -92,6 +93,7 @@ export function InputArea({ sessionId }: { sessionId: string }) {
             </div>
           </div>
           <div className="px-3 pb-2 flex items-center gap-2 text-[11px] text-text-muted">
+            <ModelPicker />
             <span className="px-1.5 py-0.5 rounded-full bg-bg-surface border border-border">Enter to send</span>
             <span>•</span>
             <span>Esc to stop</span>

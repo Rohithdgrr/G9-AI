@@ -7,9 +7,12 @@
     "shell:allow-open",
     "shell:allow-execute",
     "shell:allow-spawn",
+    "shell:allow-kill",
     "shell:allow-stdin-write",
     "dialog:default",
     "notification:default",
-    "process:default"
+    "process:default",
+    "process:allow-restart",
+    "process:allow-exit"
   ]
 }

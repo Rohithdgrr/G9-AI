@@ -17,9 +17,21 @@ interface ConnectionState {
   checkHealth: () => Promise<void>
 }
 
+async function ensureServerViaTauri(): Promise<boolean> {
+  // Try Tauri command if available (desktop), otherwise skip
+  try {
+    const tauri = await import("@tauri-apps/api/core").then((m) => m).catch(() => null) as unknown as { invoke: (cmd: string, args?: unknown) => Promise<unknown> } | null
+    if (tauri?.invoke) {
+      await tauri.invoke("ensure_opencode_server", { port: 4096 })
+      return true
+    }
+  } catch {}
+  return false
+}
+
 function getFriendlyError(err: unknown): string {
   if (err instanceof TypeError && err.message === "Failed to fetch") {
-    return "Cannot reach OpenCode server. Make sure it's running:\nopencode serve --port 4096 --cors http://localhost:1420"
+    return "Cannot reach OpenCode server. The app tried to auto-start it. If it still fails, run manually: opencode serve --port 4096 --cors http://localhost:1420"
   }
   if (err instanceof Error) {
     return err.message
@@ -46,10 +58,26 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
         headers["Authorization"] = `Basic ${btoa(`opencode:${password}`)}`
       }
 
-      const healthResp = await fetch(fetchUrl, { method: "GET", headers })
+      let healthResp = await fetch(fetchUrl, { method: "GET", headers }).catch(async (e) => {
+        // Auto-start via Tauri if first fetch fails (ECONNREFUSED)
+        const started = await ensureServerViaTauri()
+        if (started) {
+          await new Promise((r) => setTimeout(r, 1200))
+          return fetch(fetchUrl, { method: "GET", headers })
+        }
+        throw e
+      })
 
       if (!healthResp.ok) {
-        throw new Error(`Server returned ${healthResp.status}`)
+        // One more auto-start attempt on 5xx / proxy error
+        if (healthResp.status >= 500) {
+          const started = await ensureServerViaTauri()
+          if (started) {
+            await new Promise((r) => setTimeout(r, 800))
+            healthResp = await fetch(fetchUrl, { method: "GET", headers })
+          }
+        }
+        if (!healthResp.ok) throw new Error(`Server returned ${healthResp.status}`)
       }
 
       const healthData = await healthResp.json()
