@@ -82,6 +82,15 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
 
       const healthData = await healthResp.json()
 
+      // Persist password for SSE fetch (EventSource cannot send headers)
+      try {
+        if (password) {
+          localStorage.setItem("ganesha:connection", JSON.stringify({ password }))
+        } else {
+          localStorage.removeItem("ganesha:connection")
+        }
+      } catch { /* ignore */ }
+
       sdkConnect(url, password)
       const client = getClient()
       const result = await client.provider.list()
@@ -105,6 +114,7 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
 
   disconnect: () => {
     sdkDisconnect()
+    try { localStorage.removeItem("ganesha:connection") } catch { /* ignore */ }
     set({
       status: "disconnected",
       serverUrl: null,

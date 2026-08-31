@@ -20,6 +20,12 @@ export default defineConfig({
         changeOrigin: true,
         // Critical for token-by-token SSE: don't buffer, pass through as event-stream
         configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq, req) => {
+            const auth = (req.headers as Record<string, string>)["authorization"]
+            if (auth) proxyReq.setHeader("Authorization", auth)
+            const dir = (req.headers as Record<string, string>)["x-opencode-directory"]
+            if (dir) proxyReq.setHeader("x-opencode-directory", dir)
+          })
           proxy.on("proxyRes", (proxyRes) => {
             proxyRes.headers["cache-control"] = "no-cache"
             // Ensure Vite doesn't buffer SSE
@@ -46,6 +52,12 @@ export default defineConfig({
         target: "http://localhost:4096",
         changeOrigin: true,
         configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq, req) => {
+            const auth = (req.headers as Record<string, string>)["authorization"]
+            if (auth) proxyReq.setHeader("Authorization", auth)
+            const dir = (req.headers as Record<string, string>)["x-opencode-directory"]
+            if (dir) proxyReq.setHeader("x-opencode-directory", dir)
+          })
           proxy.on("proxyRes", (proxyRes) => {
             proxyRes.headers["cache-control"] = "no-cache"
             if (proxyRes.headers["content-type"]?.includes("text/event-stream")) {
