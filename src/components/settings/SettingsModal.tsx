@@ -1,0 +1,13 @@
+import { useState } from "react"
+import { X } from "lucide-react"
+import { useSettingsStore } from "../../stores/settings"
+import { useConnectionStore } from "../../stores/connection"
+import { getClient } from "../../sdk/client"
+type Tab = "general" | "connection" | "appearance" | "about"
+export function SettingsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [tab, setTab] = useState<Tab>("general")
+  const { theme, setTheme, fontSize, setFontSize } = useSettingsStore()
+  const { status, serverUrl, health } = useConnectionStore()
+  if (!open) return null
+  return <div className="fixed inset-0 z-50 flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} /><div className="relative w-full max-w-[560px] rounded-2xl border border-border bg-bg-secondary shadow-soft flex flex-col max-h-[80vh] overflow-hidden"><div className="h-12 px-4 flex items-center gap-2 border-b border-border"><span className="font-display font-semibold">Settings</span><button onClick={onClose} className="ml-auto w-7 h-7 rounded-full border border-border flex items-center justify-center"><X size={14} /></button></div><div className="flex border-b border-border text-[11px]">{(["general","connection","appearance","about"] as Tab[]).map((t)=><button key={t} onClick={()=>setTab(t)} className={`flex-1 py-2 capitalize ${tab===t?"text-accent border-b-2 border-accent":"text-text-muted"}`}>{t}</button>)}</div><div className="flex-1 overflow-y-auto p-4 space-y-4 text-[12px]">{tab==="general" && <div className="text-text-muted">General settings</div>}{tab==="connection" && <div className="space-y-2"><div className="flex justify-between"><span className="text-text-muted">URL</span><span className="font-mono">{serverUrl||"—"}</span></div><div className="flex justify-between"><span className="text-text-muted">Status</span><span>{status}</span></div><div className="flex justify-between"><span className="text-text-muted">Version</span><span>{health?.version||"unknown"}</span></div></div>}{tab==="appearance" && <div className="space-y-3"><div className="grid grid-cols-3 gap-2">{(["dark","light","system"] as const).map((t)=><button key={t} onClick={()=>setTheme(t)} className={`py-2 rounded-lg border capitalize ${theme===t?"bg-accent text-white border-accent":"bg-bg-surface border-border"}`}>{t}</button>)}</div><div className="flex items-center gap-2"><span>Font size</span><input type="range" min={12} max={16} value={fontSize} onChange={(e)=>setFontSize(Number(e.target.value))} className="flex-1"/><span className="border border-border px-2 py-1 rounded">{fontSize}px</span></div></div>}{tab==="about" && <div className="text-text-muted">G9-AI v0.1.0</div>}</div></div></div>
+}

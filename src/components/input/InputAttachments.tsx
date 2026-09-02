@@ -1,0 +1,1 @@
+export function InputAttachments({ files }: { files: string[] }) { if (!files.length) return null; return <div className="flex gap-1.5 flex-wrap px-1 py-1 text-[10px] font-mono text-text-muted">{files.map((f) => <span key={f} className="px-2 py-0.5 rounded-full border border-border bg-bg-surface">{f}</span>)}</div> }
