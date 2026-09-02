@@ -88,7 +88,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     try {
       const c = getClient()
       // Use selected model or fallback
-      let providerID = "opencode", modelID = "claude-sonnet-5"
+      let providerID = "opencode", modelID = "mimo-v2.5-free"
       try { const m = JSON.parse(localStorage.getItem("ganesha:model") || "null"); if (m) { providerID = m.providerID; modelID = m.modelID } } catch {}
       await c.session.summarize({ path: { id }, body: { providerID, modelID } })
     } catch {}

@@ -29,7 +29,13 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   theme: (localStorage.getItem("ganesha:theme") as Theme) || "dark",
   fontSize: Number(localStorage.getItem("ganesha:fontSize") || 13),
   density: (localStorage.getItem("ganesha:density") as "comfortable" | "compact") || "comfortable",
-  selectedModel: JSON.parse(localStorage.getItem("ganesha:model") || '{"providerID":"opencode","modelID":"mimo-v2.5-free"}'),
+  selectedModel: (() => {
+    try {
+      const raw = localStorage.getItem("ganesha:model")
+      if (raw) return JSON.parse(raw)
+    } catch {}
+    return { providerID: "opencode", modelID: "mimo-v2.5-free" }
+  })(),
   providers: [],
 
   setTheme: (theme: Theme) => {

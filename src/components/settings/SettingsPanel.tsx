@@ -66,7 +66,7 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
           {/* Model */}
           <section className="rounded-2xl border border-border bg-bg-tertiary/50 p-4">
             <h3 className="text-[11px] font-bold tracking-widest uppercase text-text-muted mb-3">Model & Agent</h3>
-            <div className="text-[11px] text-text-muted mb-2">Selected model is sent with each prompt. Agent is fixed to <code className="px-1 py-0.5 rounded bg-bg-surface border border-border">build</code>.</div>
+            <div className="text-[11px] text-text-muted mb-2">Only <span className="text-success font-semibold">FREE</span> models are shown — any API key works without billing. Agent is fixed to <code className="px-1 py-0.5 rounded bg-bg-surface border border-border">build</code>.</div>
             <select
               value={selectedModel ? `${selectedModel.providerID}/${selectedModel.modelID}` : ""}
               onChange={(e) => {

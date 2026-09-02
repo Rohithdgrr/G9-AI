@@ -17,6 +17,7 @@ export function ModelPicker() {
   const [search, setSearch] = useState("")
   const [models, setModels] = useState<ModelInfo[]>([])
   const [loading, setLoading] = useState(false)
+  const [freeOnly, setFreeOnly] = useState(true)
   const ref = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const selectedModel = useSettingsStore((s) => s.selectedModel)
@@ -89,7 +90,10 @@ export function ModelPicker() {
     return () => window.removeEventListener("keydown", handler)
   }, [])
 
+  const isFree = (m: ModelInfo) => m.cost.input === 0 && m.cost.output === 0
+
   const filtered = models.filter((m) => {
+    if (freeOnly && !isFree(m)) return false
     if (!search) return true
     const q = search.toLowerCase()
     return m.name.toLowerCase().includes(q) || m.providerID.toLowerCase().includes(q) || m.modelID.toLowerCase().includes(q)
@@ -110,8 +114,6 @@ export function ModelPicker() {
       })()
     : null
 
-  const isFree = (m: ModelInfo) => m.cost.input === 0 && m.cost.output === 0
-
   return (
     <div ref={ref} className="relative">
       <button
@@ -130,6 +132,10 @@ export function ModelPicker() {
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[13px] font-semibold text-text-primary">Model</span>
               <kbd className="text-[9px] px-1.5 py-0.5 rounded bg-bg-surface border border-border text-text-muted">⌘M</kbd>
+              <label className="ml-auto flex items-center gap-1.5 text-[11px] text-text-muted cursor-pointer">
+                <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} className="w-3 h-3 accent-violet-600" />
+                Free only
+              </label>
             </div>
             <input
               ref={inputRef}
@@ -194,7 +200,7 @@ export function ModelPicker() {
             <button onClick={() => { setModel({ providerID: "opencode", modelID: "mimo-v2.5-free" }); setOpen(false); setSearch("") }} className="text-[11px] text-text-muted hover:text-text-primary px-2 py-1 rounded-lg hover:bg-bg-tertiary transition-colors">
               Reset to default
             </button>
-            <span className="text-[10px] text-text-muted">{filtered.length} models</span>
+            <span className="text-[10px] text-text-muted">{filtered.length} free models{freeOnly ? "" : ` / ${models.length} total`}</span>
           </div>
         </div>
       )}

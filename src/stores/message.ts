@@ -78,12 +78,13 @@ export const useMessageStore = create<MessageState>((set, get) => ({
 
   sendMessage: async (sessionId: string, text: string) => {
     const ac = new AbortController()
-    // include selected model if set
+    // include selected model if set — default to free model so any API key works without billing
     let model: { providerID: string; modelID: string } | undefined
     try {
       const raw = localStorage.getItem("ganesha:model")
       if (raw) model = JSON.parse(raw)
-    } catch {}
+      if (!model?.providerID || !model?.modelID) model = { providerID: "opencode", modelID: "mimo-v2.5-free" }
+    } catch { model = { providerID: "opencode", modelID: "mimo-v2.5-free" } }
     set((s) => {
       const ns = new Map(s.streaming); ns.set(sessionId, { active: true, abortController: ac })
       const nm = new Map(s.messages)
