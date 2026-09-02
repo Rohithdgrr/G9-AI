@@ -171,24 +171,24 @@ function App() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 bg-bg-primary">
-        <div className="h-9 px-4 flex items-center gap-2 border-b border-border bg-bg-panel shrink-0">
-          <span className="hidden sm:inline text-[10px] tracking-widest uppercase text-text-muted">Manuscript</span>
-          <span className="text-[11px] text-text-secondary truncate flex-1 font-mono">{activeSessionId ? (sessions.find((s) => s.id === activeSessionId)?.title || "New sutra") : "Ganesha — Scribe"}</span>
-          <span className="text-[10px] text-text-muted hidden sm:inline font-mono">{current?.directory ? current.directory.split(/[/\\]/).pop() : ""}</span>
-          <button onClick={() => { setPaletteMode("files"); setPaletteOpen(true) }} className="hidden sm:inline-flex text-[10px] px-2 py-1 rounded border border-border hover:border-accent/20 bg-bg-surface text-text-muted" title="Find files (Ctrl+P)">⌕ Files</button>
-          <button onClick={() => { setPaletteMode("text"); setPaletteOpen(true) }} className="hidden sm:inline-flex text-[10px] px-2 py-1 rounded border border-border hover:border-accent/20 bg-bg-surface text-text-muted" title="Find text (Ctrl+Shift+F)">⌕ Text</button>
-          {pendingCount > 0 && <span className="text-[11px] px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/20 text-amber-600 font-medium animate-pulse">⚠ {pendingCount}</span>}
-          {import.meta.env.DEV && activeSessionId && pendingCount === 0 && (
-            <button onClick={() => { const id = `perm_${Date.now()}`; usePermissionStore.getState().add({ id, type: "bash", pattern: ["npm test", "npm *"], sessionID: activeSessionId, messageID: `msg_${Date.now()}`, title: "Agent wants to run: npm test", metadata: { command: "npm test" }, time: { created: Date.now() } } as unknown as import("./stores/permission").Permission) }} className="text-[11px] px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/15 text-amber-600">Test perm</button>
-          )}
-          {activeSessionId && streaming.get(activeSessionId)?.active && (
-            <button onClick={async () => { const s = useMessageStore.getState(); await s.abortMessage(activeSessionId) }} className="text-[11px] px-2.5 py-1 rounded-full bg-error text-white font-medium">■ Stop</button>
-          )}
-          {activeSessionId && (
-            <button onClick={async () => { const msgs = useMessageStore.getState().messages.get(activeSessionId) || []; const last = msgs[msgs.length - 1]; if (!last || last.info.role !== "assistant") return; try { await getClient().session.revert({ path: { id: activeSessionId }, body: { messageID: last.info.id } }); useMessageStore.getState().loadMessages(activeSessionId) } catch {} }} className="text-[11px] px-2 py-1 rounded-full bg-bg-tertiary border border-border text-text-muted hover:text-text-primary" title="Revert last">↩ Revert</button>
-          )}
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-full bg-bg-tertiary border border-border text-text-muted"><span className="w-1.5 h-1.5 rounded-full bg-success" /> {sessions.length}</span>
-          <button onClick={() => setSettingsOpen(true)} className="w-7 h-7 rounded-lg bg-bg-tertiary border border-border hover:border-accent/30 text-text-muted hover:text-text-primary flex items-center justify-center text-[12px]" title="Settings (Ctrl+,)">⚙</button>
+        <div className="h-10 px-4 flex items-center gap-3 border-b border-accent/10 bg-bg-panel/80 backdrop-blur shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] tracking-[0.18em] uppercase text-accent font-semibold"><span className="w-1 h-1 rounded-full bg-accent" /> Manuscript</span>
+            <span className="h-3 w-px bg-border hidden sm:block" />
+            <span className="text-[12px] font-display font-medium text-text-primary truncate">{activeSessionId ? (sessions.find((s) => s.id === activeSessionId)?.title || "New sutra") : "Ganesha — Scribe"}</span>
+            {activeSessionId && streaming.get(activeSessionId)?.active && <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-accent animate-pulse"><span className="w-1.5 h-1.5 rounded-full bg-accent" /> writing</span>}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {pendingCount > 0 && <span className="text-[10px] px-2 py-1 rounded bg-error-soft border border-error/20 text-error font-medium animate-pulse">◐ {pendingCount} awaiting</span>}
+            {activeSessionId && streaming.get(activeSessionId)?.active && (
+              <button onClick={async () => { const s = useMessageStore.getState(); await s.abortMessage(activeSessionId) }} className="text-[10px] px-2.5 py-1 rounded bg-error text-white font-medium hover:opacity-90">■ Stop</button>
+            )}
+            <div className="hidden sm:flex items-center gap-1.5 pl-2 ml-1 border-l border-border">
+              <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_6px_rgba(143,160,143,0.6)]" />
+              <span className="text-[10px] tracking-wide text-text-muted font-mono">live</span>
+            </div>
+            <button onClick={() => setSettingsOpen(true)} className="w-7 h-7 rounded-full border border-border bg-bg-surface hover:border-accent/30 hover:bg-bg-hover text-text-muted hover:text-accent flex items-center justify-center text-[12px] transition-colors" title="Settings (Ctrl+,)">⚙</button>
+          </div>
         </div>
 
         {activeSessionId ? (
