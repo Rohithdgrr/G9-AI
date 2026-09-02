@@ -59,50 +59,73 @@ export function InputArea({ sessionId, onSelectFile }: { sessionId: string; onSe
     if (e.key === "Escape" && showMentions) setShowMentions(false)
   }
 
-  return (
-    <div className="border-t border-border bg-bg-secondary p-2.5 font-mono" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
-      <div className="max-w-[760px] mx-auto flex flex-col gap-2">
-        {/* Model bar — opencode: inline Build model */}
-        <div className="flex items-center gap-2 flex-wrap text-[10px] text-text-muted">
-          <ModelPicker />
-          <span className="hidden sm:inline">· tab plan/build · ctrl+p commands</span>
-          <span className="ml-auto hidden sm:inline">↵ send · shift+↵ newline · esc stop</span>
-        </div>
+  const canSend = text.trim().length > 0 && !streaming?.active
 
-        <div className="relative">
-          {showMentions && fileResults.length > 0 && (
-            <div className="absolute bottom-full left-0 right-0 mb-2 border border-border bg-bg-secondary overflow-hidden max-h-[180px] overflow-y-auto z-20 font-mono">
-              <div className="px-2 py-1 text-[10px] text-text-muted border-b border-border">@ {fileResults.length} results</div>
-              {fileResults.map((f) => (
-                <button key={f} onClick={() => insertMention(f)} className="w-full text-left px-2 py-1.5 text-[11px] text-text-secondary hover:bg-bg-hover truncate">{f}</button>
-              ))}
-            </div>
-          )}
-          <div className="relative border border-border bg-bg-surface focus-within:border-accent/40 overflow-hidden" style={{ borderLeft: "2px solid var(--accent)" }}>
-            <span className="absolute top-1.5 left-1.5 w-1 h-1 bg-accent/60 rounded-full" /><span className="absolute top-1.5 right-1.5 w-1 h-1 bg-accent/60 rounded-full" /><span className="absolute bottom-1.5 left-1.5 w-1 h-1 bg-accent/60 rounded-full" /><span className="absolute bottom-1.5 right-1.5 w-1 h-1 bg-accent/60 rounded-full" />
-            <div className="flex items-end gap-2 p-2">
-              <span className="text-accent text-[12px] pl-1">┃</span>
+  return (
+    <div className="border-t border-border bg-bg-panel p-3" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
+      <div className="max-w-[740px] mx-auto">
+        {/* Writing desk — elevated manuscript sheet with brass inlay */}
+        <div className="rounded-[10px] border border-border bg-bg-secondary shadow-soft overflow-hidden focus-within:border-accent/30 focus-within:shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all">
+          {/* Desk header: model + hints */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60 bg-bg-tertiary/40">
+            <ModelPicker />
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] text-text-muted font-mono">
+              <span className="w-1 h-1 rounded-full bg-accent" /> tab plan/build · ctrl+p commands
+            </span>
+            <span className="ml-auto hidden lg:inline text-[10px] text-text-muted font-mono">↵ send · ⇧↵ newline · esc stop</span>
+          </div>
+
+          <div className="relative">
+            {showMentions && fileResults.length > 0 && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 rounded-lg border border-border bg-bg-secondary shadow-soft overflow-hidden max-h-[180px] overflow-y-auto z-20">
+                <div className="px-3 py-1.5 text-[10px] tracking-wide uppercase text-text-muted border-b border-border bg-bg-tertiary/50">↳ {fileResults.length} files</div>
+                {fileResults.map((f) => (
+                  <button key={f} onClick={() => insertMention(f)} className="w-full text-left px-3 py-2 text-[11px] font-mono text-text-secondary hover:bg-bg-surface hover:text-text-primary truncate border-b border-border/40 last:border-0">{f}</button>
+                ))}
+              </div>
+            )}
+
+            {/* Text area */}
+            <div className="relative px-3 pt-3 pb-1">
               <textarea
                 ref={textareaRef}
                 value={text}
-                onChange={(e) => { handleTextChange(e.target.value); const el = e.target as HTMLTextAreaElement; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 160) + "px" }}
+                onChange={(e) => { handleTextChange(e.target.value); const el = e.target as HTMLTextAreaElement; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 140) + "px" }}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask anything — @ for files"
+                placeholder="Ask anything — type @ for files, drag & drop to attach"
                 rows={1}
-                className="flex-1 bg-transparent text-[12px] leading-5 text-text-primary placeholder:text-text-muted resize-none focus:outline-none min-h-[24px] py-1 font-mono"
-                style={{ height: 40 }}
+                className="w-full bg-transparent text-[13px] leading-6 text-text-primary placeholder:text-text-muted/60 resize-none focus:outline-none min-h-[44px] py-1 font-mono"
+                style={{ height: 44 }}
               />
-              <div className="shrink-0 flex items-center gap-2">
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 px-3 py-2.5 border-t border-border/50 bg-bg-tertiary/20">
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] text-text-muted font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-success/70" /> build · {text.length ? `${text.length} chars` : "ready"}
+              </span>
+              <span className="sm:hidden text-[10px] text-text-muted font-mono">build · ready</span>
+
+              <div className="ml-auto flex items-center gap-2">
                 {streaming?.active ? (
-                  <button onClick={() => abortMessage(sessionId)} className="px-3 py-1.5 rounded border border-error text-error hover:bg-error-soft text-[11px] font-medium">■ stop</button>
+                  <button onClick={() => abortMessage(sessionId)} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-error/30 bg-error-soft text-error text-[11px] font-semibold hover:bg-error/15">■ Stop</button>
                 ) : (
-                  <button onClick={handleSubmit} disabled={!text.trim()} className="px-3 py-1.5 rounded bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-[11px] font-semibold">↑</button>
+                  <button onClick={handleSubmit} disabled={!canSend} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] font-semibold transition-all ${canSend ? "bg-accent text-white hover:bg-accent-hover shadow-[0_2px_8px_rgba(200,169,106,0.3)]" : "bg-bg-surface border border-border text-text-muted cursor-not-allowed"}`}>
+                    Send <span className="text-[11px]">↑</span>
+                  </button>
                 )}
               </div>
             </div>
-            <div className="h-px bg-border mx-2" />
-            <div className="px-2 py-1 text-[10px] text-text-muted">╹ build · {text.length ? `${text.length} chars` : "ready"}</div>
+
+            {/* Brass corner inlay — signature */}
+            <span className="pointer-events-none absolute top-2 left-2 w-2 h-2 border-l border-t border-accent/30 rounded-tl" />
+            <span className="pointer-events-none absolute top-2 right-2 w-2 h-2 border-r border-t border-accent/30 rounded-tr" />
+            <span className="pointer-events-none absolute bottom-2 left-2 w-2 h-2 border-l border-b border-accent/30 rounded-bl" />
+            <span className="pointer-events-none absolute bottom-2 right-2 w-2 h-2 border-r border-b border-accent/30 rounded-br" />
           </div>
+        </div>
+        <div className="mt-1.5 flex items-center justify-center gap-2 text-[10px] text-text-muted/60 font-mono">
+          <span>Ganesha scribe</span><span>·</span><span>drop files anywhere</span>
         </div>
       </div>
     </div>
