@@ -37,8 +37,9 @@ export default {
         glow: "var(--shadow-glow)",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: ["IBM Plex Sans", "system-ui", "sans-serif"],
+        display: ["Fraunces", "serif"],
+        mono: ["Fragment Mono", "JetBrains Mono", "monospace"],
       },
     },
   },

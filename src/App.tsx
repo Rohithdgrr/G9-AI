@@ -112,20 +112,24 @@ function App() {
     <div className="flex h-full bg-bg-primary">
       <NotificationToast />
       <SSEBanner />
-      <div className="w-[280px] shrink-0 bg-bg-secondary border-r border-border flex flex-col font-mono">
-        <div className="h-8 px-2.5 flex items-center gap-2 border-b border-border shrink-0">
-          <div className="w-5 h-5 rounded bg-accent flex items-center justify-center text-white text-[10px] font-bold">G</div>
-          <span className="text-[12px] font-semibold text-text-primary tracking-tight">Ganesha</span>
-          <span className="text-[9px] px-1 py-0.5 rounded bg-accent-soft border border-accent/15 text-accent">BETA</span>
-          <button onClick={handleNewSession} className="ml-auto w-6 h-6 rounded border border-border bg-bg-surface hover:bg-bg-hover text-text-muted hover:text-text-primary flex items-center justify-center text-[12px]" title="New chat (Ctrl+N)">+</button>
+      <div className="w-[280px] shrink-0 bg-bg-secondary border-r border-border flex flex-col">
+        <div className="h-10 px-3 flex items-center gap-2 border-b border-border shrink-0">
+          <div className="w-7 h-7 rounded-[7px] bg-accent flex items-center justify-center text-white font-display text-[13px] font-bold">ग</div>
+          <div className="leading-none">
+            <div className="text-[12px] font-semibold tracking-tight text-text-primary font-display">Ganesha</div>
+            <div className="text-[9px] tracking-[0.14em] uppercase text-text-muted">Scribe · Remove obstacles</div>
+          </div>
+          <span className="ml-auto text-[9px] tracking-widest uppercase px-1.5 py-1 rounded border border-accent/20 bg-accent-soft text-accent">BETA</span>
         </div>
 
-        <div className="p-2 border-b border-border space-y-2">
-          <button onClick={handleNewSession} className="w-full py-2 rounded bg-accent hover:bg-accent-hover text-white text-[11px] font-semibold flex items-center justify-center gap-1">+ New Chat</button>
+        <div className="p-2.5 border-b border-border space-y-2">
+          <div className="brass-rule" />
+          <button onClick={handleNewSession} className="w-full py-2 rounded bg-error hover:opacity-90 text-white text-[11px] font-semibold tracking-wide flex items-center justify-center gap-1.5">— New sutra —</button>
           <div className="relative">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted text-[11px]">⌕</span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search… Ctrl+K" className="w-full pl-7 pr-2 py-1.5 rounded border border-border bg-bg-surface text-[11px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/40" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sutras… ⌘K" className="w-full pl-7 pr-2 py-1.5 rounded border border-border bg-bg-surface text-[11px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/40 font-mono" />
           </div>
+          <div className="flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-text-muted"><span className="h-px flex-1 bg-border" /> Sutras <span className="h-px flex-1 bg-border" /></div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-1 space-y-px">
@@ -166,12 +170,13 @@ function App() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="h-8 px-3 flex items-center gap-1.5 border-b border-border bg-bg-panel shrink-0 font-mono">
-          <span className="text-[11px] text-text-muted truncate flex-1">{activeSessionId ? (sessions.find((s) => s.id === activeSessionId)?.title || "New Chat") : "Ganesha — OpenCode Chat"}</span>
-          <span className="text-[10px] text-text-muted hidden sm:inline">{current?.directory ? current.directory.split(/[/\\]/).pop() : ""}</span>
-          <button onClick={() => { setPaletteMode("files"); setPaletteOpen(true) }} className="hidden sm:inline-flex text-[10px] px-2 py-1 rounded border border-border hover:bg-bg-hover text-text-muted" title="Find files (Ctrl+P)">⌕ Files</button>
-          <button onClick={() => { setPaletteMode("text"); setPaletteOpen(true) }} className="hidden sm:inline-flex text-[10px] px-2 py-1 rounded border border-border hover:bg-bg-hover text-text-muted" title="Find text (Ctrl+Shift+F)">⌕ Text</button>
+      <div className="flex-1 flex flex-col min-w-0 bg-bg-primary">
+        <div className="h-9 px-4 flex items-center gap-2 border-b border-border bg-bg-panel shrink-0">
+          <span className="hidden sm:inline text-[10px] tracking-widest uppercase text-text-muted">Manuscript</span>
+          <span className="text-[11px] text-text-secondary truncate flex-1 font-mono">{activeSessionId ? (sessions.find((s) => s.id === activeSessionId)?.title || "New sutra") : "Ganesha — Scribe"}</span>
+          <span className="text-[10px] text-text-muted hidden sm:inline font-mono">{current?.directory ? current.directory.split(/[/\\]/).pop() : ""}</span>
+          <button onClick={() => { setPaletteMode("files"); setPaletteOpen(true) }} className="hidden sm:inline-flex text-[10px] px-2 py-1 rounded border border-border hover:border-accent/20 bg-bg-surface text-text-muted" title="Find files (Ctrl+P)">⌕ Files</button>
+          <button onClick={() => { setPaletteMode("text"); setPaletteOpen(true) }} className="hidden sm:inline-flex text-[10px] px-2 py-1 rounded border border-border hover:border-accent/20 bg-bg-surface text-text-muted" title="Find text (Ctrl+Shift+F)">⌕ Text</button>
           {pendingCount > 0 && <span className="text-[11px] px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/20 text-amber-600 font-medium animate-pulse">⚠ {pendingCount}</span>}
           {import.meta.env.DEV && activeSessionId && pendingCount === 0 && (
             <button onClick={() => { const id = `perm_${Date.now()}`; usePermissionStore.getState().add({ id, type: "bash", pattern: ["npm test", "npm *"], sessionID: activeSessionId, messageID: `msg_${Date.now()}`, title: "Agent wants to run: npm test", metadata: { command: "npm test" }, time: { created: Date.now() } } as unknown as import("./stores/permission").Permission) }} className="text-[11px] px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/15 text-amber-600">Test perm</button>
@@ -194,30 +199,31 @@ function App() {
             <InputArea sessionId={activeSessionId} onSelectFile={(p) => setInputText((t) => t + (t ? " " : "") + `@${p} `)} />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center p-8">
+          <div className="flex-1 flex items-center justify-center p-8 bg-bg-primary">
             <div className="text-center max-w-[560px] animate-fadeIn">
-              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-xl shadow-glow">✦</div>
-              <h2 className="text-[18px] font-semibold tracking-tight text-text-primary">Welcome to Ganesha</h2>
-              <p className="text-[12px] leading-relaxed text-text-muted mt-1.5">Open a folder, pick a model, then chat — agent will read, edit, and run tasks.</p>
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <button onClick={openFolder} className="px-4 py-2 rounded-xl bg-accent text-white text-[12px] font-semibold">📂 Open Folder</button>
-                <button onClick={() => { setPaletteMode("files"); setPaletteOpen(true) }} className="px-4 py-2 rounded-xl bg-bg-tertiary border border-border text-[12px] font-medium text-text-secondary">⌕ Find Files</button>
-                <button onClick={() => setSettingsOpen(true)} className="px-4 py-2 rounded-xl bg-bg-tertiary border border-border text-[12px] font-medium text-text-secondary">⚙ Model</button>
+              <div className="inline-flex items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-accent border border-accent/20 rounded-full px-3 py-1 bg-accent-soft">◈ Temple manuscript — ink on paper</div>
+              <h2 className="font-display text-[28px] font-semibold tracking-tight text-text-primary mt-3">Begin a new sutra</h2>
+              <p className="text-[12px] leading-relaxed text-text-muted mt-2 max-w-[46ch] mx-auto">Ganesha holds the thread. Ask, and the scribe will read the leaves, edit the margins, and run the tests.</p>
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                <button onClick={openFolder} className="px-4 py-2 rounded bg-error text-white text-[12px] font-semibold">Open Folder</button>
+                <button onClick={() => { setPaletteMode("files"); setPaletteOpen(true) }} className="px-4 py-2 rounded border border-border bg-bg-surface text-[12px]">⌕ Find Files</button>
+                <button onClick={() => setSettingsOpen(true)} className="px-4 py-2 rounded border border-border bg-bg-surface text-[12px]">Choose Model</button>
               </div>
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
                 {[
                   { t: "Explain this repo", d: "Structure, stack, and where things live" },
                   { t: "Add auth to routes", d: "JWT middleware across API routes" },
                   { t: "Find & fix a bug", d: "Grep, read, patch, and verify" },
                   { t: "Run tests", d: "Execute bash and summarize results" },
                 ].map((c) => (
-                  <button key={c.t} onClick={handleNewSession} className="rounded-xl border border-border bg-bg-secondary hover:bg-bg-tertiary hover:border-accent/20 text-left px-3.5 py-3 transition-colors group">
-                    <div className="text-[12px] font-semibold text-text-primary group-hover:text-accent transition-colors">{c.t} →</div>
+                  <button key={c.t} onClick={handleNewSession} className="rounded border border-border bg-bg-secondary hover:bg-bg-surface hover:border-accent/20 text-left px-3.5 py-3 transition-colors group">
+                    <div className="text-[12px] font-semibold text-text-primary group-hover:text-accent font-display">{c.t} →</div>
                     <div className="text-[11px] text-text-muted mt-0.5">{c.d}</div>
                   </button>
                 ))}
               </div>
-              <button onClick={handleNewSession} className="mt-5 px-5 py-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[12px] font-semibold shadow-glow transition-all">＋ New Chat</button>
+              <div className="mt-4 brass-rule" />
+              <button onClick={handleNewSession} className="mt-4 px-5 py-2 rounded bg-accent hover:bg-accent-hover text-white text-[11px] font-semibold tracking-wide">＋ New sutra</button>
             </div>
           </div>
         )}

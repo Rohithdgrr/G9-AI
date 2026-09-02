@@ -78,7 +78,8 @@ export function InputArea({ sessionId, onSelectFile }: { sessionId: string; onSe
               ))}
             </div>
           )}
-          <div className="border border-border bg-bg-surface focus-within:border-accent/40 overflow-hidden" style={{ borderLeft: "2px solid var(--border)" }}>
+          <div className="relative border border-border bg-bg-surface focus-within:border-accent/40 overflow-hidden" style={{ borderLeft: "2px solid var(--accent)" }}>
+            <span className="absolute top-1.5 left-1.5 w-1 h-1 bg-accent/60 rounded-full" /><span className="absolute top-1.5 right-1.5 w-1 h-1 bg-accent/60 rounded-full" /><span className="absolute bottom-1.5 left-1.5 w-1 h-1 bg-accent/60 rounded-full" /><span className="absolute bottom-1.5 right-1.5 w-1 h-1 bg-accent/60 rounded-full" />
             <div className="flex items-end gap-2 p-2">
               <span className="text-accent text-[12px] pl-1">┃</span>
               <textarea

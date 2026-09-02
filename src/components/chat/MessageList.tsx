@@ -60,20 +60,24 @@ function MessageBubble({ message, isStreaming }: { message: MessageWithParts; is
   return (
     <div className="message-enter">
       {isUser ? (
-        <div className="border-l-2 border-accent/60 pl-3 py-1 my-2">
-          <div className="text-[10px] text-text-muted font-mono mb-1">› user · {time}</div>
+        <div className="relative pl-4 py-2 my-3 bg-accent-soft/40 border border-accent/15 rounded">
+          <div className="absolute left-0 top-0 bottom-0 w-px bg-accent" />
+          <div className="absolute -left-1 top-3 brass-dot" />
+          <div className="text-[10px] tracking-widest uppercase text-text-muted font-mono mb-1">› You · {time}</div>
           <div className="text-[12px] leading-5 text-text-primary font-mono whitespace-pre-wrap">{message.parts.map((p,i)=> {
             if (p.type==="text") return <MarkdownBlock key={(p as {id:string}).id||i} text={(p as TextPart).text||""} isUser={true} />
             return null
           })}</div>
         </div>
       ) : (
-        <div className="py-1">
+        <div className="relative py-2 pl-4">
+          <div className="absolute left-0 top-0 bottom-0 thread-line" />
+          <div className="absolute -left-[3px] top-2 brass-dot opacity-60" />
           <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted mb-1">
-            <span className="text-accent">▣</span><span>Ganesha</span><span>· {time}</span>
+            <span className="text-accent">▣</span><span className="tracking-widest uppercase">Ganesha</span><span>· {time}</span>
             {isAssistantStreaming && <span className="text-accent animate-pulse">● streaming</span>}
           </div>
-          <div className="pl-3 border-l border-border/60 space-y-1">
+          <div className="space-y-2">
             {message.parts.map((part, i) => {
               const isLastVisible = i === message.parts.length - 1
               if (part.type === "text") {
@@ -137,14 +141,14 @@ export function MessageList({ sessionId }: { sessionId: string }) {
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8 font-mono">
-        <div className="text-center max-w-[420px] animate-fadeIn">
-          <div className="text-[11px] text-text-muted mb-2">▣ opencode · ready</div>
-          <h2 className="text-[13px] font-semibold text-text-primary">Start a conversation</h2>
-          <p className="text-[11px] leading-relaxed text-text-muted mt-1">Ask about your codebase, request edits, or run tasks.</p>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-left">
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center max-w-[440px] animate-fadeIn">
+          <div className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.16em] uppercase text-accent border border-accent/15 bg-accent-soft rounded-full px-2.5 py-1">◈ Palm leaves ready</div>
+          <h2 className="font-display text-[22px] font-semibold text-text-primary mt-3">What shall we inscribe?</h2>
+          <p className="text-[12px] leading-relaxed text-text-muted mt-1.5">Ask about your codebase, request edits, or run tasks. The thread holds every turn.</p>
+          <div className="mt-5 grid grid-cols-2 gap-2 text-left">
             {["Explain this repo structure", "Add auth to API routes", "Find where tokens are stored", "Run tests and fix failures"].map((s) => (
-              <div key={s} className="rounded border border-border bg-bg-surface px-2.5 py-2 text-[11px] text-text-secondary">&ldquo;{s}&rdquo;</div>
+              <div key={s} className="rounded border border-border bg-bg-surface hover:border-accent/20 px-2.5 py-2.5 text-[11px] text-text-secondary leading-snug">&ldquo;{s}&rdquo;</div>
             ))}
           </div>
         </div>
