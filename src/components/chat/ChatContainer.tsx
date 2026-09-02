@@ -2,8 +2,9 @@ import { useEffect, useRef } from "react"
 import { useMessageStore } from "../../stores/message"
 import { MessageBubble } from "./MessageBubble"
 import { TypingIndicator } from "./TypingIndicator"
+const EMPTY_MESSAGES: import("../../stores/message").MessageWithParts[] = []
 export function ChatContainer({ sessionId }: { sessionId: string }) {
-  const messages = useMessageStore((s) => s.messages.get(sessionId) || [])
+  const messages = useMessageStore((s) => s.messages.get(sessionId) ?? EMPTY_MESSAGES)
   const streaming = useMessageStore((s) => s.streaming.get(sessionId))
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => { const el = ref.current; if (!el) return; const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 160; if (nearBottom) el.scrollTop = el.scrollHeight }, [messages, streaming?.active])

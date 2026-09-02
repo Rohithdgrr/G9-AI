@@ -14,9 +14,9 @@ import { useMessageStore } from "./stores/message"
 
 export default function App() {
   const { status, connect } = useConnectionStore()
-  const { loadSessions } = useSessionStore()
+  const loadSessions = useSessionStore((s) => s.loadSessions)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
-  const { loadProject } = useProjectStore()
+  const loadProject = useProjectStore((s) => s.loadProject)
   const settingsOpen = useUIStore((s) => s.settingsOpen)
   const setSettings = useUIStore((s) => s.setSettings)
   const loadMessages = useMessageStore((s) => s.loadMessages)
@@ -30,10 +30,10 @@ export default function App() {
       const cur = useConnectionStore.getState().status
       if (cur === "disconnected") await connect("http://localhost:4096").catch(() => {})
     })()
-  }, [status, connect])
+  }, [status]) // connect is stable from store; omit to avoid loop
 
-  useEffect(() => { if (status === "connected") { loadSessions(); loadProject() } }, [status, loadSessions, loadProject])
-  useEffect(() => { if (activeSessionId) loadMessages(activeSessionId) }, [activeSessionId, loadMessages])
+  useEffect(() => { if (status === "connected") { loadSessions(); loadProject() } }, [status]) // stable fns; omit deps to prevent infinite
+  useEffect(() => { if (activeSessionId) loadMessages(activeSessionId) }, [activeSessionId])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
