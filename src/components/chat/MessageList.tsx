@@ -22,10 +22,10 @@ function normalizeMarkdownForStream(text: string, isStreaming: boolean): string 
 
 function MarkdownBlock({ text, isUser, isStreaming }: { text: string; isUser: boolean; isStreaming?: boolean }) {
   if (!text) return null
-  if (isUser) return <div className="whitespace-pre-wrap text-[13px] leading-6 text-white">{text}</div>
+  if (isUser) return <div className="whitespace-pre-wrap text-[12px] leading-5 text-white font-mono">{text}</div>
   const normalized = normalizeMarkdownForStream(text, !!isStreaming)
   return (
-    <div className="prose prose-invert max-w-none prose-sm prose-p:leading-6 prose-p:my-2 prose-pre:my-2 prose-code:text-[12px] prose-code:font-mono prose-headings:font-semibold prose-a:text-accent">
+    <div className="max-w-none font-mono text-[12px] leading-5 prose prose-sm prose-p:my-1.5 prose-pre:my-2 prose-code:text-[11px] prose-headings:font-semibold prose-headings:text-text-primary prose-a:text-accent prose-invert">
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>{normalized}</ReactMarkdown>
     </div>
   )
@@ -58,39 +58,42 @@ function MessageBubble({ message, isStreaming }: { message: MessageWithParts; is
   const isStreamingText = !!isAssistantStreaming
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} message-enter`}>
-      <div className={`max-w-[86%] rounded-2xl ${isUser ? "px-4 py-3 bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-glow" : "px-0 py-2 bg-transparent text-text-primary"} `}>
-        {!isUser && (
-          <div className="flex items-center gap-2 mb-1.5 px-1">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-[11px] font-bold">G</div>
-            <span className="text-[11px] font-semibold tracking-wide text-text-secondary">Ganesha</span>
-            <span className="text-[11px] text-text-muted">&bull; {time}</span>
-            {isAssistantStreaming && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent-soft border border-accent/20 text-accent animate-pulse">streaming</span>}
-          </div>
-        )}
-        <div className={`${isUser ? "" : "rounded-2xl border border-border bg-bg-secondary/80 backdrop-blur px-4 py-3.5 shadow-soft"}`}>
-          {message.parts.map((part, i) => {
-            const isLastVisible = i === message.parts.length - 1
-            if (part.type === "text") {
-              const txt = (part as TextPart).text || ""
-              if (!txt) return null
-              return (
-                <span key={(part as { id: string }).id || i}>
-                  <MarkdownBlock text={txt} isUser={isUser} isStreaming={isStreamingText && isLastVisible} />
-                  {isStreamingText && isLastVisible && (
-                    <span className="inline-block w-[3px] h-[1.1em] bg-accent ml-0.5 animate-pulse translate-y-[2px] rounded-full" />
-                  )}
-                </span>
-              )
-            }
-            if (part.type === "tool") return <ToolRouter key={(part as { id: string }).id || i} part={part as ToolPart} />
-            if (part.type === "reasoning") return <ReasoningBlock key={(part as { id: string }).id || i} text={(part as { text: string }).text} />
-            if ((part as unknown as { text: string }).text) return <div key={(part as { id: string }).id || i} className="text-[12px] text-text-secondary whitespace-pre-wrap my-1">{(part as unknown as { text: string }).text}</div>
+    <div className="message-enter">
+      {isUser ? (
+        <div className="border-l-2 border-accent/60 pl-3 py-1 my-2">
+          <div className="text-[10px] text-text-muted font-mono mb-1">› user · {time}</div>
+          <div className="text-[12px] leading-5 text-text-primary font-mono whitespace-pre-wrap">{message.parts.map((p,i)=> {
+            if (p.type==="text") return <MarkdownBlock key={(p as {id:string}).id||i} text={(p as TextPart).text||""} isUser={true} />
             return null
-          })}
-          {isUser && <div className="text-[11px] text-white/70 mt-1.5 text-right">{time}</div>}
+          })}</div>
         </div>
-      </div>
+      ) : (
+        <div className="py-1">
+          <div className="flex items-center gap-2 text-[10px] font-mono text-text-muted mb-1">
+            <span className="text-accent">▣</span><span>Ganesha</span><span>· {time}</span>
+            {isAssistantStreaming && <span className="text-accent animate-pulse">● streaming</span>}
+          </div>
+          <div className="pl-3 border-l border-border/60 space-y-1">
+            {message.parts.map((part, i) => {
+              const isLastVisible = i === message.parts.length - 1
+              if (part.type === "text") {
+                const txt = (part as TextPart).text || ""
+                if (!txt) return null
+                return (
+                  <span key={(part as { id: string }).id || i}>
+                    <MarkdownBlock text={txt} isUser={false} isStreaming={isStreamingText && isLastVisible} />
+                    {isStreamingText && isLastVisible && <span className="inline-block w-[2px] h-3 bg-accent ml-0.5 animate-pulse translate-y-[1px]" />}
+                  </span>
+                )
+              }
+              if (part.type === "tool") return <ToolRouter key={(part as { id: string }).id || i} part={part as ToolPart} />
+              if (part.type === "reasoning") return <ReasoningBlock key={(part as { id: string }).id || i} text={(part as { text: string }).text} />
+              if ((part as unknown as { text: string }).text) return <div key={(part as { id: string }).id || i} className="text-[11px] text-text-secondary whitespace-pre-wrap my-1 font-mono">{(part as unknown as { text: string }).text}</div>
+              return null
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -134,14 +137,14 @@ export function MessageList({ sessionId }: { sessionId: string }) {
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 font-mono">
         <div className="text-center max-w-[420px] animate-fadeIn">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-accent-soft border border-accent/15 flex items-center justify-center text-accent text-xl">&#10022;</div>
-          <h2 className="text-[15px] font-semibold text-text-primary">Start a conversation</h2>
-          <p className="text-[12px] leading-relaxed text-text-muted mt-1.5">Ask about your codebase, request edits, or run tasks. The agent can read, edit, grep, and run bash &mdash; all from chat.</p>
+          <div className="text-[11px] text-text-muted mb-2">▣ opencode · ready</div>
+          <h2 className="text-[13px] font-semibold text-text-primary">Start a conversation</h2>
+          <p className="text-[11px] leading-relaxed text-text-muted mt-1">Ask about your codebase, request edits, or run tasks.</p>
           <div className="mt-4 grid grid-cols-2 gap-2 text-left">
             {["Explain this repo structure", "Add auth to API routes", "Find where tokens are stored", "Run tests and fix failures"].map((s) => (
-              <div key={s} className="rounded-xl border border-border bg-bg-secondary px-3 py-2.5 text-[12px] text-text-secondary">&ldquo;{s}&rdquo;</div>
+              <div key={s} className="rounded border border-border bg-bg-surface px-2.5 py-2 text-[11px] text-text-secondary">&ldquo;{s}&rdquo;</div>
             ))}
           </div>
         </div>
@@ -162,19 +165,17 @@ export function MessageList({ sessionId }: { sessionId: string }) {
   const showThinking = streaming?.active && !hasVisibleAssistant
 
   return (
-    <div ref={containerRef} data-testid="message-list" onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-      {loadingMore && <div className="text-center text-[11px] text-text-muted py-2">Loading more...</div>}
+    <div ref={containerRef} data-testid="message-list" onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 font-mono">
+      {loadingMore && <div className="text-center text-[10px] text-text-muted py-2">Loading more…</div>}
       {messages.map((m, i) => {
         const isLastAssistant = i === messages.length - 1 && m.info.role === "assistant"
         return <MessageBubble key={m.info.id || i} message={m} isStreaming={isLastAssistant && !!streaming?.active} />
       })}
       <PermissionPrompt sessionId={sessionId} />
       {showThinking && (
-        <div className="flex justify-start message-enter">
-          <div className="rounded-2xl border border-border bg-bg-secondary px-4 py-3 flex items-center gap-2.5">
-            <span className="w-3 h-3 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-            <span className="text-[12px] text-text-muted">Thinking...</span>
-          </div>
+        <div className="flex items-center gap-2 text-[11px] text-text-muted py-1">
+          <span className="w-2 h-2 border border-accent/30 border-t-accent rounded-full animate-spin" />
+          <span>Thinking…</span>
         </div>
       )}
       <div ref={bottomRef} />

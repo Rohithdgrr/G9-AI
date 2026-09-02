@@ -53,7 +53,6 @@ export function ModelPicker() {
             })
           }
         }
-        // Sort: free first, then by provider, then name
         list.sort((a, b) => {
           const aFree = a.cost.input === 0 && a.cost.output === 0
           const bFree = b.cost.input === 0 && b.cost.output === 0
@@ -99,7 +98,6 @@ export function ModelPicker() {
     return m.name.toLowerCase().includes(q) || m.providerID.toLowerCase().includes(q) || m.modelID.toLowerCase().includes(q)
   })
 
-  // Group by provider
   const grouped = new Map<string, ModelInfo[]>()
   for (const m of filtered) {
     const arr = grouped.get(m.providerID) || []
@@ -107,58 +105,68 @@ export function ModelPicker() {
     grouped.set(m.providerID, arr)
   }
 
-  const currentLabel = selectedModel
-    ? (() => {
-        const m = models.find((x) => x.providerID === selectedModel.providerID && x.modelID === selectedModel.modelID)
-        return m ? `${m.providerID}/${m.name}` : selectedModel.modelID
-      })()
+  const current = selectedModel
+    ? models.find((x) => x.providerID === selectedModel.providerID && x.modelID === selectedModel.modelID) || null
     : null
+  const currentLabel = current ? current.name : selectedModel?.modelID || "Select model"
+  const currentProvider = current?.providerID || selectedModel?.providerID || "opencode"
 
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-bg-surface border border-border text-[11px] font-medium text-text-secondary hover:text-text-primary hover:border-accent/30 transition-colors max-w-[200px] truncate"
-        title={`Current model: ${currentLabel || "server default"} — click to change`}
+        className={`flex items-center gap-1.5 px-2 py-1 rounded border font-mono text-[11px] ${open ? "bg-accent border-accent text-white" : "bg-bg-surface border-border text-text-primary hover:bg-bg-hover"}`}
+        title={`${currentProvider}/${currentLabel} — click to change (⌘M)`}
       >
-        <span className="text-accent text-[10px]">●</span>
-        <span className="truncate">{currentLabel || "default"}</span>
-        <svg className="w-3 h-3 shrink-0 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        <span className="text-[11px]">▣</span>
+        <span className="truncate max-w-[180px]">{currentProvider}/{currentLabel}</span>
+        <span className="text-[9px] px-1 py-0.5 rounded bg-success text-white font-bold">FREE</span>
+        <span className="text-[10px]">{open ? "▾" : "▸"}</span>
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-[360px] rounded-2xl border border-border bg-bg-secondary shadow-lg overflow-hidden z-50 animate-fadeIn">
-          <div className="p-3 border-b border-border">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[13px] font-semibold text-text-primary">Model</span>
-              <kbd className="text-[9px] px-1.5 py-0.5 rounded bg-bg-surface border border-border text-text-muted">⌘M</kbd>
-              <label className="ml-auto flex items-center gap-1.5 text-[11px] text-text-muted cursor-pointer">
-                <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} className="w-3 h-3 accent-violet-600" />
+        <div className="absolute bottom-full left-0 mb-2 w-[420px] max-w-[92vw] border border-border bg-bg-secondary shadow-soft overflow-hidden z-[100] animate-fadeIn font-mono">
+          <div className="p-2.5 border-b border-border bg-bg-panel">
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="font-semibold text-text-primary">Choose Model</span>
+              <span className="text-text-muted">{filtered.length} free{freeOnly ? "" : ` / ${models.length}`}</span>
+              <kbd className="ml-auto text-[10px] px-1 py-0.5 rounded border border-border bg-bg-surface text-text-muted">⌘M</kbd>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted text-[11px]">⌕</span>
+                <input
+                  ref={inputRef}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search…"
+                  className="w-full pl-7 pr-2 py-1.5 rounded border border-border bg-bg-surface text-[11px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/30"
+                />
+              </div>
+              <label className={`flex items-center gap-1 px-2 py-1.5 rounded border text-[10px] cursor-pointer ${freeOnly ? "bg-success-soft border-success/20 text-success" : "bg-bg-surface border-border text-text-muted"}`}>
+                <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} className="w-3 h-3 accent-success" />
                 Free only
               </label>
             </div>
-            <input
-              ref={inputRef}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search models…"
-              className="w-full px-3 py-2 rounded-xl bg-bg-surface border border-border text-[12px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/30"
-            />
           </div>
 
-          <div className="max-h-[320px] overflow-y-auto">
+          <div className="max-h-[380px] overflow-y-auto">
             {loading && models.length === 0 && (
-              <div className="p-6 text-center text-[12px] text-text-muted">Loading models…</div>
+              <div className="p-8 text-center">
+                <div className="w-6 h-6 border-2 border-violet-500/30 border-t-violet-600 rounded-full animate-spin mx-auto" />
+                <div className="text-[12px] text-text-muted mt-2">Loading models…</div>
+              </div>
             )}
             {!loading && filtered.length === 0 && (
-              <div className="p-6 text-center text-[12px] text-text-muted">
-                {search ? "No matches" : "No models available"}
+              <div className="p-8 text-center">
+                <div className="text-[13px] font-medium text-text-secondary">{search ? `No matches for "${search}"` : "No models available"}</div>
+                <div className="text-[11px] text-text-muted mt-1">Try disabling “Free only”</div>
               </div>
             )}
             {Array.from(grouped.entries()).map(([providerID, providerModels]) => (
               <div key={providerID}>
-                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted border-b border-border/50 bg-bg-surface/50 sticky top-0">
-                  {providerID}
+                <div className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-widest text-text-muted border-b border-border/60 bg-bg-tertiary/70 sticky top-0 backdrop-blur flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500" /> {providerID} <span className="ml-auto text-[10px] font-medium normal-case tracking-normal bg-bg-surface border border-border px-1.5 py-0.5 rounded-full">{providerModels.length}</span>
                 </div>
                 {providerModels.map((m) => {
                   const active = selectedModel?.providerID === m.providerID && selectedModel?.modelID === m.modelID
@@ -171,24 +179,23 @@ export function ModelPicker() {
                         setOpen(false)
                         setSearch("")
                       }}
-                      className={`w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-bg-tertiary transition-colors ${active ? "bg-accent-soft" : ""}`}
+                      className={`w-full text-left px-3.5 py-3 flex items-center gap-3 hover:bg-bg-tertiary transition-colors border-b border-border/30 last:border-0 ${active ? "bg-violet-500/10 hover:bg-violet-500/10" : ""}`}
                     >
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${active ? "bg-accent" : free ? "bg-success" : "bg-text-muted/30"}`} />
+                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-2 ${active ? "bg-violet-600 ring-violet-600/20" : free ? "bg-success ring-success/20" : "bg-text-muted/30 ring-transparent"}`} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-[12px] font-medium text-text-primary truncate">{m.name}</div>
-                        <div className="text-[10px] text-text-muted truncate">{m.modelID}</div>
+                        <div className={`text-[13px] font-semibold truncate ${active ? "text-violet-600" : "text-text-primary"}`}>{m.name}</div>
+                        <div className="text-[11px] text-text-muted truncate font-mono">{m.modelID}</div>
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {m.reasoning && <span className="text-[9px] px-1 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">reason</span>}
-                        {m.toolcall && <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">tools</span>}
-                        {m.attachment && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">attach</span>}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {m.reasoning && <span className="text-[9px] px-1.5 py-1 rounded-full bg-violet-500/10 text-violet-600 border border-violet-500/20 font-semibold">reason</span>}
+                        {m.toolcall && <span className="text-[9px] px-1.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-semibold">tools</span>}
                         {free ? (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-success/10 text-success border border-success/20 font-semibold">FREE</span>
+                          <span className="text-[10px] px-2 py-1 rounded-full bg-success text-white font-bold">FREE</span>
                         ) : (
-                          <span className="text-[9px] text-text-muted">${m.cost.input}/{m.cost.output}</span>
+                          <span className="text-[10px] text-text-muted font-mono">${m.cost.input}/{m.cost.output}</span>
                         )}
                       </div>
-                      {active && <span className="text-accent text-[10px]">✓</span>}
+                      {active && <span className="text-violet-600 text-[13px] font-bold">✓</span>}
                     </button>
                   )
                 })}
@@ -196,11 +203,11 @@ export function ModelPicker() {
             ))}
           </div>
 
-          <div className="p-2 border-t border-border flex items-center justify-between">
-            <button onClick={() => { setModel({ providerID: "opencode", modelID: "mimo-v2.5-free" }); setOpen(false); setSearch("") }} className="text-[11px] text-text-muted hover:text-text-primary px-2 py-1 rounded-lg hover:bg-bg-tertiary transition-colors">
-              Reset to default
+          <div className="p-2.5 bg-bg-tertiary/50 border-t border-border flex items-center justify-between">
+            <button onClick={() => { setModel({ providerID: "opencode", modelID: "mimo-v2.5-free" }); setOpen(false); setSearch("") }} className="text-[12px] font-medium text-text-muted hover:text-violet-600 px-3 py-1.5 rounded-xl hover:bg-bg-surface border border-transparent hover:border-border transition-colors">
+              ↺ Reset to MiMo V2.5 Free
             </button>
-            <span className="text-[10px] text-text-muted">{filtered.length} free models{freeOnly ? "" : ` / ${models.length} total`}</span>
+            <span className="text-[11px] text-text-muted font-medium">{filtered.length} models</span>
           </div>
         </div>
       )}

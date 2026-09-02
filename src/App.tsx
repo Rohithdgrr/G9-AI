@@ -112,91 +112,66 @@ function App() {
     <div className="flex h-full bg-bg-primary">
       <NotificationToast />
       <SSEBanner />
-      <div className="w-[300px] shrink-0 bg-bg-secondary border-r border-border flex flex-col">
-        <div className="h-12 px-3 flex items-center gap-2 border-b border-border shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-[11px] font-black">G</div>
-          <span className="text-[13px] font-semibold tracking-tight text-text-primary">Ganesha</span>
-          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-accent-soft border border-accent/20 text-accent font-medium">BETA</span>
-          <button onClick={handleNewSession} className="ml-auto w-7 h-7 rounded-lg bg-bg-tertiary border border-border hover:border-accent/30 hover:text-accent text-text-muted flex items-center justify-center text-[14px] transition-colors" title="New chat (Ctrl+N)">＋</button>
+      <div className="w-[280px] shrink-0 bg-bg-secondary border-r border-border flex flex-col font-mono">
+        <div className="h-8 px-2.5 flex items-center gap-2 border-b border-border shrink-0">
+          <div className="w-5 h-5 rounded bg-accent flex items-center justify-center text-white text-[10px] font-bold">G</div>
+          <span className="text-[12px] font-semibold text-text-primary tracking-tight">Ganesha</span>
+          <span className="text-[9px] px-1 py-0.5 rounded bg-accent-soft border border-accent/15 text-accent">BETA</span>
+          <button onClick={handleNewSession} className="ml-auto w-6 h-6 rounded border border-border bg-bg-surface hover:bg-bg-hover text-text-muted hover:text-text-primary flex items-center justify-center text-[12px]" title="New chat (Ctrl+N)">+</button>
         </div>
 
-        <div className="p-3 border-b border-border space-y-2">
-          <button onClick={handleNewSession} className="w-full py-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[12px] font-semibold tracking-wide shadow-glow transition-all flex items-center justify-center gap-1.5">＋ New Chat <span className="text-white/60 text-[11px]">• Tab</span></button>
-          <button onClick={openFolder} className="w-full py-2 rounded-xl bg-bg-tertiary border border-border hover:border-accent/20 text-[12px] font-medium text-text-secondary flex items-center justify-center gap-1.5" title="Open folder (choose project directory)">📂 Open Folder</button>
-          <div className="text-[11px] text-text-muted truncate text-center" title={current?.worktree || current?.directory || ""}>{current?.worktree || current?.directory || "No folder • click Open Folder"} • <VcsStatus compact /></div>
+        <div className="p-2 border-b border-border space-y-2">
+          <button onClick={handleNewSession} className="w-full py-2 rounded bg-accent hover:bg-accent-hover text-white text-[11px] font-semibold flex items-center justify-center gap-1">+ New Chat</button>
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[12px]">⌕</span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sessions… (Ctrl+K)" className="w-full pl-8 pr-3 py-2 rounded-xl bg-bg-tertiary border border-border text-[12px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/30 focus:ring-4 focus:ring-accent/10 transition-all" />
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted text-[11px]">⌕</span>
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search… Ctrl+K" className="w-full pl-7 pr-2 py-1.5 rounded border border-border bg-bg-surface text-[11px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/40" />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        <div className="flex-1 overflow-y-auto p-1 space-y-px">
           {filtered.map((s) => (
-            <div key={s.id} className={`group w-full text-left rounded-xl px-3 py-2.5 border transition-all ${s.id === activeSessionId ? "bg-bg-tertiary border-accent/20 shadow-soft" : "bg-transparent border-transparent hover:bg-bg-tertiary/60 hover:border-border"}`}>
+            <div key={s.id} className={`group text-left rounded border-l-[2px] px-2 py-2 ${s.id === activeSessionId ? "bg-bg-tertiary border-accent" : "bg-transparent border-transparent hover:bg-bg-hover"}`}>
               {editingId === s.id ? (
-                <input autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} onBlur={async () => { if (editTitle.trim()) await renameSession(s.id, editTitle.trim()); setEditingId(null) }} onKeyDown={async (e) => { if (e.key === "Enter" && editTitle.trim()) { await renameSession(s.id, editTitle.trim()); setEditingId(null) } if (e.key === "Escape") setEditingId(null) }} className="w-full px-2 py-1 rounded-lg bg-bg-surface border border-accent/30 text-[12px] text-text-primary focus:outline-none" />
+                <input autoFocus value={editTitle} onChange={(e) => setEditTitle(e.target.value)} onBlur={async () => { if (editTitle.trim()) await renameSession(s.id, editTitle.trim()); setEditingId(null) }} onKeyDown={async (e) => { if (e.key === "Enter" && editTitle.trim()) { await renameSession(s.id, editTitle.trim()); setEditingId(null) } if (e.key === "Escape") setEditingId(null) }} className="w-full px-2 py-1 rounded border border-accent text-[11px] bg-bg-surface focus:outline-none" />
               ) : (
                 <>
                   <button onClick={() => setActiveSession(s.id)} className="w-full text-left">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] border ${s.id === activeSessionId ? "bg-accent-soft border-accent/20 text-accent" : "bg-bg-surface border-border text-text-muted"}`}>◈</span>
-                      <span className="text-[12px] font-medium text-text-primary truncate flex-1">{s.title || "New Chat"}</span>
-                      {s.id === activeSessionId && <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />}
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[10px] ${s.id === activeSessionId ? "text-accent" : "text-text-muted"}`}>▸</span>
+                      <span className="text-[11px] font-medium text-text-primary truncate flex-1">{s.title || "New Chat"}</span>
+                      {s.id === activeSessionId && <span className="w-1 h-1 rounded-full bg-success" />}
                     </div>
-                    <div className="flex items-center gap-2 mt-1 ml-8">
-                      <span className="text-[11px] text-text-muted">{new Date(s.time.created).toLocaleDateString()} • {new Date(s.time.created).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                      <span className="ml-auto text-[10px] px-1 py-0.5 rounded bg-bg-surface border border-border text-text-muted font-mono truncate max-w-[80px]">{s.id.slice(0, 8)}</span>
-                    </div>
+                    <div className="text-[10px] text-text-muted truncate mt-0.5 pl-3.5">{new Date(s.time.created).toLocaleDateString()} {new Date(s.time.created).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} · {s.id.slice(0, 6)}</div>
                   </button>
-                  <div className="hidden group-hover:flex flex-wrap items-center gap-1 mt-1.5 ml-8">
-                    <button onClick={() => { setEditingId(s.id); setEditTitle(s.title || "") }} className="text-[11px] px-1.5 py-0.5 rounded bg-bg-surface border border-border text-text-muted hover:text-text-primary">Rename</button>
-                    <button onClick={() => deleteSession(s.id)} className="text-[11px] px-1.5 py-0.5 rounded bg-error-soft border border-error/20 text-error hover:bg-error/15">Delete</button>
-                    <button onClick={() => forkSession(s.id)} className="text-[11px] px-1.5 py-0.5 rounded bg-bg-surface border border-border text-text-muted hover:text-text-primary" title="Fork session">Fork</button>
-                    <button onClick={() => shareSession(s.id)} className="text-[11px] px-1.5 py-0.5 rounded bg-bg-surface border border-border text-text-muted hover:text-text-primary" title="Share — copies URL">Share</button>
-                    <button onClick={() => summarizeSession(s.id)} className="text-[11px] px-1.5 py-0.5 rounded bg-accent-soft border border-accent/15 text-accent" title="Compact / summarize">Compact</button>
+                  <div className="hidden group-hover:flex items-center gap-1 mt-1 pl-3.5">
+                    <button onClick={() => { setEditingId(s.id); setEditTitle(s.title || "") }} className="text-[10px] px-1 py-0.5 rounded border border-border hover:border-accent/30 text-text-muted">Rename</button>
+                    <button onClick={() => deleteSession(s.id)} className="text-[10px] px-1 py-0.5 rounded border border-error/20 text-error hover:bg-error-soft">Del</button>
+                    <button onClick={() => forkSession(s.id)} className="text-[10px] px-1 py-0.5 rounded border border-border text-text-muted">Fork</button>
                   </div>
                 </>
               )}
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="mx-2 mt-6 rounded-xl border border-dashed border-border p-6 text-center">
-              <div className="text-text-muted text-xl mb-1">🗂</div>
-              <div className="text-[12px] text-text-secondary font-medium">{query ? "No matches" : "No conversations yet"}</div>
-              <div className="text-[11px] text-text-muted mt-1">{query ? "Try a different search" : "Click New Chat to start"}</div>
+            <div className="mx-2 mt-8 text-center">
+              <div className="text-[11px] text-text-muted">{query ? "No matches" : "No conversations yet"}</div>
+              <div className="text-[10px] text-text-muted mt-1">{query ? "Try another search" : "Press + to start"}</div>
             </div>
           )}
         </div>
 
-        <div className="p-3 border-t border-border">
-          <div className="rounded-xl bg-bg-tertiary border border-border p-2.5 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-[11px] font-bold">◉</div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-medium text-text-primary leading-none">Local Workspace</div>
-              <div className="text-[11px] text-text-muted truncate" title={current?.directory || ""}>{current?.directory ? current.directory.split(/[/\\]/).slice(-2).join("/") : `ganesha • ${sessions.length} sessions`}</div>
-            </div>
-            <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-          </div>
-          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-text-muted">
-            <VcsStatus />
-            <button onClick={() => setDiffOpen(true)} className="ml-auto text-[11px] px-1.5 py-0.5 rounded-full bg-bg-surface border border-border hover:border-accent/20">View Diff</button>
-          </div>
-          <div className="mt-2 flex items-center justify-between text-[11px] text-text-muted">
-            <span>v0.1.0 • Tauri</span>
-            <span className="px-1.5 py-0.5 rounded-full bg-accent-soft border border-accent/15 text-accent">● live</span>
-          </div>
-          <button onClick={() => setSettingsOpen(true)} className="mt-2 w-full py-1.5 rounded-xl bg-bg-surface border border-border hover:border-accent/20 text-[11px] font-medium text-text-secondary flex items-center justify-center gap-1.5">
-            ⚙ Settings <span className="text-text-muted">Ctrl+,</span>
-          </button>
+        <div className="p-2 border-t border-border flex items-center gap-2">
+          <button onClick={() => setSettingsOpen(true)} className="flex-1 py-1.5 rounded border border-border bg-bg-surface hover:bg-bg-hover text-[11px] text-text-secondary flex items-center justify-center gap-1">⚙ Settings</button>
+          <span className="text-[10px] text-text-muted">{sessions.length} · live</span>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="h-12 px-4 flex items-center gap-1.5 border-b border-border bg-bg-secondary/60 backdrop-blur shrink-0">
-          <button onClick={openFolder} className="hidden sm:inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-full bg-bg-tertiary border border-border hover:border-accent/20 text-text-muted" title="Open folder">📂 {current?.directory ? current.directory.split(/[/\\]/).pop() : "Open Folder"}</button>
-          <span className="text-[12px] font-medium text-text-secondary truncate flex-1">{activeSessionId ? (sessions.find((s) => s.id === activeSessionId)?.title || "New Chat") : "Ganesha — OpenCode Chat"}</span>
-          <button onClick={() => { setPaletteMode("files"); setPaletteOpen(true) }} className="hidden sm:inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-bg-tertiary border border-border hover:border-accent/20 text-text-muted" title="Find files (Ctrl+P)">⌕ Files</button>
-          <button onClick={() => { setPaletteMode("text"); setPaletteOpen(true) }} className="hidden sm:inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-bg-tertiary border border-border hover:border-accent/20 text-text-muted" title="Find text (Ctrl+Shift+F)">⌕ Text</button>
+        <div className="h-8 px-3 flex items-center gap-1.5 border-b border-border bg-bg-panel shrink-0 font-mono">
+          <span className="text-[11px] text-text-muted truncate flex-1">{activeSessionId ? (sessions.find((s) => s.id === activeSessionId)?.title || "New Chat") : "Ganesha — OpenCode Chat"}</span>
+          <span className="text-[10px] text-text-muted hidden sm:inline">{current?.directory ? current.directory.split(/[/\\]/).pop() : ""}</span>
+          <button onClick={() => { setPaletteMode("files"); setPaletteOpen(true) }} className="hidden sm:inline-flex text-[10px] px-2 py-1 rounded border border-border hover:bg-bg-hover text-text-muted" title="Find files (Ctrl+P)">⌕ Files</button>
+          <button onClick={() => { setPaletteMode("text"); setPaletteOpen(true) }} className="hidden sm:inline-flex text-[10px] px-2 py-1 rounded border border-border hover:bg-bg-hover text-text-muted" title="Find text (Ctrl+Shift+F)">⌕ Text</button>
           {pendingCount > 0 && <span className="text-[11px] px-2 py-1 rounded-full bg-amber-500/15 border border-amber-500/20 text-amber-600 font-medium animate-pulse">⚠ {pendingCount}</span>}
           {import.meta.env.DEV && activeSessionId && pendingCount === 0 && (
             <button onClick={() => { const id = `perm_${Date.now()}`; usePermissionStore.getState().add({ id, type: "bash", pattern: ["npm test", "npm *"], sessionID: activeSessionId, messageID: `msg_${Date.now()}`, title: "Agent wants to run: npm test", metadata: { command: "npm test" }, time: { created: Date.now() } } as unknown as import("./stores/permission").Permission) }} className="text-[11px] px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/15 text-amber-600">Test perm</button>
